@@ -123,8 +123,7 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
         epsi = -100000
         tau  = 100000
         model.update()
-        model.optimize()
-        print("Obj value now: ",model.objVal)
+
         while(abs(tau - epsi) > prec):   
             
             (xx, d) = CG(n, x0, populations, countries, maj1, maj2, k, pList, epsList,  prec)
