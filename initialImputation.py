@@ -49,7 +49,7 @@ def CG(n, x, populations, countries, maj1, maj2, k, pList, epsList, prec):
         assert(eps <= epsList[i])
     return (ss, eps)
     
-def initialImputation(n, populations, countries, maj1, maj2):
+def initialImputation(n, populations, countries, maj1, maj2, prec):
     
     x0 = []
     for i in range(0,n):
@@ -57,7 +57,6 @@ def initialImputation(n, populations, countries, maj1, maj2):
         
     epsi = -100000
     tau  = 100000
-    prec = 0.000001
     
     epsList = []    
     pList = []
@@ -186,25 +185,25 @@ def main(argv):
                    19, 16, 14, 11, 10, 10, 9, 
                    8, 5, 4, 4, 3, 2, 1, 1]
         countries = [1 for i in range(0,len(populations))]
-        #counts = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-        
+        precision = 1e-6
         print('No of arguments: ',len(sys.argv),' arguments')
         print('Argument list: ',str(sys.argv))
         
         try:
-            opts, args = getopt.getopt(argv,"hw:q:v:z:",["weight1=","quota1=","weight2=","quota2="])
+            opts, args = getopt.getopt(argv,"hw:q:v:z:r:",["weight1=","quota1=","weight2=","quota2=","prec="])
         except getopt.GetoptError:
-            print('initialImputation.py -w <weight vector> -q <quota 1> -v <weight vector 2> -z <quota 2>')
+            print('initialImputation.py -w <weight vector> -q <quota 1> -v <weight vector 2> -z <quota 2> -r <precision>')
             sys.exit(2)
         
         pops = []
         counts = []
         maj1 = 0
         maj2 = 0
+        prec = 0
         
         for opt, arg in opts:
             if opt == '-h':
-                print('initialImputation.py -w <weight vector 1> -q <quota 1> -v <weight vector 2> -z <quota 2>')
+                print('initialImputation.py -w <weight vector 1> -q <quota 1> -v <weight vector 2> -z <quota 2> -r <precision>')
                 print('If population list is not provided, default 28 country will be used!')                
                 sys.exit()
             elif opt in ("-w", "--weight1"):
@@ -215,6 +214,8 @@ def main(argv):
                 counts = arg
             elif opt in ("-z", "--quota2"):
                 maj2 = arg                
+            elif opt in ("-r", "--prec"):
+                prec = arg
         
         if(pops != []):
             pops = ast.literal_eval(pops)
@@ -230,9 +231,14 @@ def main(argv):
             counts = countries.copy()
             maj2 = 15
             
+        if(prec != 0):
+            prec = ast.literal_eval(prec)
+        else:
+            prec = precision
+            
         n = len(pops)
         
-        (x1, eps, Cs) = initialImputation(n, pops, counts, maj1, maj2)
+        (x1, eps, Cs) = initialImputation(n, pops, counts, maj1, maj2, prec)
         
         print("Obtained the following imputation:", x1)
         print("And epsilon:", eps)
