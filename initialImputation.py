@@ -117,7 +117,7 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
         print("Obj value: ",model.objVal)
         for ss in Cr:
             model.addConstr(epsList[k-1] + quicksum(v[i] for i in range(0,n) if ss[i] != 0) >= \
-            1 if isWinning(ss, populations, countries, maj1, maj2) else 0, "constr: "+str(ss)+" for "+str(epsList[k-1]))
+            1 if isWinning(n, ss, populations, countries, maj1, maj2) else 0, "constr: "+str(ss)+" for "+str(epsList[k-1]))
         Cr = []
         
         epsi = -100000
@@ -135,11 +135,11 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
             if (Sj not in Cr):
                 #TODO: check winning
                 model.addConstr(e + quicksum(v[i] for i in range(0,n) if Sj[i] != 0) >= \
-                    1 if isWinning(Sj, populations, countries, maj1, maj2) else 0, "constr"+str(Sj))
+                    1 if isWinning(n, Sj, populations, countries, maj1, maj2) else 0, "constr"+str(Sj))
                 Cr.append(Sj)
             else:
-                for constr in model.getConstrs():
-                    print(constr.constrName)
+#                for constr in model.getConstrs():
+#                    print(constr.constrName)
                 print("Tau: ", tau)
                 print("Eps: ", epsi)
                 assert(False and "subset repeating itself")
@@ -171,9 +171,9 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
     print(pList, epsList)
     return (x0, epsi, Cr)
         
-def isWinning(subset, populations, countries, maj1, maj2):
-    if(sum(populations[i] for i in range(0,28) if subset[i] != 0) >= maj1 \
-    and sum(countries[i] for i in range(0,28) if subset[i] !=0) >= maj2):
+def isWinning(n, subset, populations, countries, maj1, maj2):
+    if(sum(populations[i] for i in range(0,n) if subset[i] != 0) >= maj1 \
+    and sum(countries[i] for i in range(0,n) if subset[i] !=0) >= maj2):
         return True
     return False
 
@@ -224,7 +224,7 @@ def main(argv):
             maj1 = 0.65 * sum(populations)
             
         if(counts != []):
-            counts = ast.literal_eval(countries)
+            counts = ast.literal_eval(counts)
             maj2 = ast.literal_eval(maj2)
         else:
             counts = countries.copy()
