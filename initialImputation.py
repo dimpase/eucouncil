@@ -87,21 +87,28 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
 
         if(k != 0):
             print(epsList)
-            model.addConstr(e <= epsList[k-1] - prec, name="epsless"+str(k-1))
-        
+            model.addConstr(e, GRB.LESS_EQUAL, epsList[k-1], "epsless"+str(k-1))
+            
+        model.update()
         model.optimize()
         status = model.status
     
+        #if model is unfeasible after imposing a lower epsilon
+        #remove all offending constraints that aren't among the initial conditions
         if(status != GRB.Status.OPTIMAL):
             removed = []            
             while(True):
                 model.computeIIS()
                 
                 for c in model.getConstrs():
-                    if c.IISConstr and 'pozi' not in str(c.constrName) and str(c.constrName) != 'sum1' and 'epsless' not in str(c.constrName):
+                    if c.IISConstr:
+                        print(c.constrName)
+                    if c.IISConstr and 'constr' in str(c.constrName):
                         print(c.constrName)
                         removed.append(str(c.constrName))
                         model.remove(c)
+                assert(removed != [])
+                model.update()
                 model.optimize()
                 status = model.status
                 
@@ -115,25 +122,31 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
                     break
             print("Removed constrs: ",removed)
         print("Obj value: ",model.objVal)
+        
+        #All added constraints during the last convergence \
+        #should have an epsilon of at least the one they converged on
         for ss in Cr:
             model.addConstr(epsList[k-1] + quicksum(v[i] for i in range(0,n) if ss[i] != 0) >= \
-            1 if isWinning(n, ss, populations, countries, maj1, maj2) else 0, "constr: "+str(ss)+" for "+str(epsList[k-1]))
+            1 if isWinning(n, ss, populations, countries, maj1, maj2) else 0, \
+            "constr: "+str(ss)+" for "+str(epsList[k-1]))
         Cr = []
         
+        #reset epsi and tau for each run
         epsi = -100000
         tau  = 100000
         model.update()
 
         while(abs(tau - epsi) > prec):   
             
+            #generate a constraint
             (xx, d) = CG(n, x0, populations, countries, maj1, maj2, k, pList, epsList,  prec)
             tau = d
             Sj = xx.copy()
     
-            print("This is current Sj")
+            print("This is the current constraint to add")
             print(Sj)
             if (Sj not in Cr):
-                #TODO: check winning
+                #if constraint has not been added before during this run
                 model.addConstr(e + quicksum(v[i] for i in range(0,n) if Sj[i] != 0) >= \
                     1 if isWinning(n, Sj, populations, countries, maj1, maj2) else 0, "constr"+str(Sj))
                 Cr.append(Sj)
@@ -142,7 +155,10 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
 #                    print(constr.constrName)
                 print("Tau: ", tau)
                 print("Eps: ", epsi)
-                assert(False and "subset repeating itself")
+                print("We must've found the nucleolus early")
+                epsi = tau
+                break
+#                assert(False and "subset repeating itself")
                 
             model.update()
             model.optimize()
@@ -154,17 +170,17 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
                 ct += 1
             epsi = model.objVal
             
-            print("Current x0, eps")
+            print("Current x0, eps, tau")
             print(x0)
             print(epsi)
             print(tau)
-            print(abs(tau - epsi))
         
         for e in epsList:
             assert(epsi <= e)
             
         epsList.append(epsi)
         pList.append(x0)
+#        model.addConstr(e, GRB.LESS_EQUAL, epsi, "epsless"+str(k))
         
         print("Next step!")
             
