@@ -8,6 +8,7 @@ from gurobipy import *
 import sys, getopt
 import ast
 import math
+from copy import copy
 
 #initial interior optimizer    
 def CG(n, x, populations, countries, maj1, maj2, k, pList, epsList, prec):
@@ -141,7 +142,7 @@ def initialImputation(n, populations, countries, maj1, maj2, prec):
             #generate a constraint
             (xx, d) = CG(n, x0, populations, countries, maj1, maj2, k, pList, epsList,  prec)
             tau = d
-            Sj = xx.copy()
+            Sj = copy(xx)
     
             print("This is the current constraint to add")
             print(Sj)
@@ -236,14 +237,14 @@ def main(argv):
             pops = ast.literal_eval(pops)
             maj1 = ast.literal_eval(maj1)
         else:
-            pops = populations.copy()
+            pops = copy(populations)
             maj1 = 0.65 * sum(populations)
             
         if(counts != []):
             counts = ast.literal_eval(counts)
             maj2 = ast.literal_eval(maj2)
         else:
-            counts = countries.copy()
+            counts = copy(countries)
             maj2 = 15
             
         if(prec != 0):
